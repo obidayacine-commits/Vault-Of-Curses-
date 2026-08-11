@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explore now the best photos and videos of the exclusive Jujutsu Kaisen anime, and see the latest news and the release dates of the episodes from Vault of Curses.">
+  <meta name="keywords" content="Vault of Curses, JJK, Anime jujutsu kaisen, Gojo satoru, Sukuna, images jujutsu kaisen, News anime, انمي جوجيتسو كايسن, غوجو ساتورو, صور غوجو ساتورو, صور جوجيتسو كايسن">
+  <meta name="author" content="Debeka Yassin Obaida">
+  <title>Vault of Curses || Home</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="icon" href="img/favicon.png">
+</head>
+<body>
+  <div class="lang-bar">
+    <button id="warn-btn" class="warn-btn" title="تنبيه">⚠️</button>
+    <button id="lang-toggle-btn" class="lang-btn" data-current-lang="en">🌐 العربية</button>
+  </div>
+
+  <div id="warn-overlay" class="warn-overlay">
+    <div class="warn-box">
+      <div class="warn-ar">
+        <p>• هناك بعض الأفكار الموجودة في الأنمي تسيء للدين بطريقة أو بأخرى ، لذا وجب الحذر .</p>
+        <p>• لا تجعل متابعة الأنمي تلهيك عن صلاتك و عباداتك ، أو عذرا لعدم القيام بواجباتك . حياتك أولى</p>
+      </div>
+      <div class="warn-en">
+        <p>• Some ideas in anime may be offensive to religion in one way or another, so caution is advised.</p>
+        <p>• Don't let watching anime distract you from your prayers and religious duties, or use it as an excuse for neglecting your obligations. Your life comes first.</p>
+      </div>
+      <button class="warn-ok-btn" onclick="document.getElementById('warn-overlay').classList.remove('open')">OK</button>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <div id="branding">
+        <h1><span class="highlight">Jujutsu Kaisen</span></h1>
+      </div>
+      <nav>
+        <ul>
+          <li class="current"><a href="index.html" data-i18n="nav-home">Home</a></li>
+          <li><a href="about.html" data-i18n="nav-about">About</a></li>
+          <li><a href="services.html" data-i18n="nav-dmca">DMCA & Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+<section id="showcase"></section>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="news" data-i18n="tab-news">News</button>
+    <button class="tab-btn" data-tab="pictures" data-i18n="tab-pictures">Pictures</button>
+    <button class="tab-btn" data-tab="videos" data-i18n="tab-videos">Videos</button>
+  </div>
+
+  <!-- فلتر الأخبار — يظهر فقط في News -->
+  <div id="news-filter" class="news-filter">
+    <div class="filter-scroll-row">
+      <button class="news-btn active" data-news="all"      data-i18n="nf-all">All</button>
+      <button class="news-btn" data-news="schedule"        data-i18n="nf-schedule">Episode Schedule</button>
+      <button class="news-btn" data-news="author"          data-i18n="nf-author">Author Statements</button>
+      <button class="news-btn" data-news="fans"            data-i18n="nf-fans">Fan Opinions</button>
+      <button class="news-btn" data-news="important"       data-i18n="nf-important">Important</button>
+    </div>
+  </div>
+
+  <!-- فلتر الشخصيات — يظهر فقط في Pictures & Videos -->
+  <div id="char-filter" class="char-filter" style="display:none;">
+    <div class="filter-scroll-row">
+      <button class="char-btn active" data-char="all"    data-i18n="cf-all">All</button>
+      <button class="char-btn" data-char="gojo"          data-i18n="cf-gojo">Gojo</button>
+      <button class="char-btn" data-char="sukuna"        data-i18n="cf-sukuna">Sukuna</button>
+      <button class="char-btn" data-char="toji"          data-i18n="cf-toji">Toji</button>
+      <button class="char-btn" data-char="megumi"        data-i18n="cf-megumi">Megumi</button>
+      <button class="char-btn" data-char="yoji"          data-i18n="cf-yoji">Yoji</button>
+      <button class="char-btn" data-char="suguru"        data-i18n="cf-suguru">Suguru</button>
+      <button class="char-btn" data-char="shosso"        data-i18n="cf-shosso">Shosso</button>
+      <button class="char-btn" data-char="yuta"          data-i18n="cf-yuta">Yuta</button>
+    </div>
+  </div>
+
+  <div id="content-grid" class="grid"></div>
+
+  <footer>
+ <nav>
+        <ul>
+          <p class="current"><a href="index.html" data-i18n="nav-home">Home</a></p>
+          <p><a href="about.html" data-i18n="nav-about">About</a></p>
+          <p><a href="services.html" data-i18n="nav-dmca">DMCA & Contact</a></p>
+        </ul>
+      </nav>
+    <p data-i18n="footer-text">Vault of Curses, Copyright &copy; 2026</p>
+  </footer>
+
+  <button class="back-btn">⬆️</button>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="lang.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.getElementById('warn-btn').addEventListener('click', function() {
+      document.getElementById('warn-overlay').classList.add('open');
+    });
+    var backBtn = document.querySelector(".back-btn");
+    window.addEventListener("scroll", function() {
+      if (this.pageYOffset > 100) backBtn.classList.add("active");
+      else backBtn.classList.remove("active");
+    });
+    backBtn.addEventListener("click", function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>
