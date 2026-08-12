@@ -7,6 +7,7 @@ const translations = {
   'nav-about':   { en: 'About',          ar: 'حول' },
   'nav-dmca':    { en: 'DMCA & Contact', ar: 'DMCA والتواصل' },
 
+  'cta-browse':   { en: 'Browse Now',   ar: 'تصفح الآن'},
   // تبويبات الرئيسية
   'tab-news':     { en: 'News',     ar: 'الأخبار' },
   'tab-pictures': { en: 'Pictures', ar: 'الصور' },
