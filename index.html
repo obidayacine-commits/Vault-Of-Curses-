@@ -22,7 +22,19 @@
   <link rel="stylesheet" href="./css/style.css">
   <link rel="icon" type="image/png" href="/img/favicon.png">
 </head>
-<body>
+<body class="intro-active">
+  <div id="intro-loader">
+    <div class="intro-glow g1"></div>
+    <div class="intro-glow g2"></div>
+    <div class="intro-glow g3"></div>
+    <div class="intro-content">
+      <span class="intro-kanji">呪術廻戦</span>
+      <h1 class="intro-title">JUJUTSU KAISEN</h1>
+      <p class="intro-tagline">Vault of Curses</p>
+      <div class="intro-bar"><span class="intro-bar-fill"></span></div>
+    </div>
+  </div>
+
   <div class="lang-bar">
     <button id="warn-btn" class="warn-btn" title="تنبيه">⚠️</button>
     <button id="lang-toggle-btn" class="lang-btn" data-current-lang="en">🌐 العربية</button>
@@ -56,40 +68,12 @@
       </nav>
     </div>
   </header>
-<section id="showcase"></section>
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="news" data-i18n="tab-news">News</button>
-    <button class="tab-btn" data-tab="pictures" data-i18n="tab-pictures">Pictures</button>
-    <button class="tab-btn" data-tab="videos" data-i18n="tab-videos">Videos</button>
-  </div>
 
-  <!-- فلتر الأخبار — يظهر فقط في News -->
-  <div id="news-filter" class="news-filter">
-    <div class="filter-scroll-row">
-      <button class="news-btn active" data-news="all"      data-i18n="nf-all">All</button>
-      <button class="news-btn" data-news="schedule"        data-i18n="nf-schedule">Episode Schedule</button>
-      <button class="news-btn" data-news="author"          data-i18n="nf-author">Author Statements</button>
-      <button class="news-btn" data-news="fans"            data-i18n="nf-fans">Fan Opinions</button>
-      <button class="news-btn" data-news="important"       data-i18n="nf-important">Important</button>
-    </div>
-  </div>
+  <section id="showcase"></section>
 
-  <!-- فلتر الشخصيات — يظهر فقط في Pictures & Videos -->
-  <div id="char-filter" class="char-filter" style="display:none;">
-    <div class="filter-scroll-row">
-      <button class="char-btn active" data-char="all"    data-i18n="cf-all">All</button>
-      <button class="char-btn" data-char="gojo"          data-i18n="cf-gojo">Gojo</button>
-      <button class="char-btn" data-char="sukuna"        data-i18n="cf-sukuna">Sukuna</button>
-      <button class="char-btn" data-char="toji"          data-i18n="cf-toji">Toji</button>
-      <button class="char-btn" data-char="megumi"        data-i18n="cf-megumi">Megumi</button>
-      <button class="char-btn" data-char="yoji"          data-i18n="cf-yoji">Yoji</button>
-      <button class="char-btn" data-char="suguru"        data-i18n="cf-suguru">Suguru</button>
-      <button class="char-btn" data-char="shosso"        data-i18n="cf-shosso">Shosso</button>
-      <button class="char-btn" data-char="yuta"          data-i18n="cf-yuta">Yuta</button>
-    </div>
+  <div class="browse-cta">
+    <a href="browse.html" class="browse-btn" data-i18n="cta-browse">Browse Now</a>
   </div>
-
-  <div id="content-grid" class="grid"></div>
 
   <footer>
  <nav>
@@ -102,24 +86,48 @@
     <p data-i18n="footer-text">Vault of Curses, Copyright &copy; 2026</p>
   </footer>
 
-  <button class="back-btn">⬆️</button>
-
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
   <script src="lang.js"></script>
-  <script src="script.js"></script>
   <script>
+    (function () {
+      var loader    = document.getElementById('intro-loader');
+      var showcase  = document.getElementById('showcase');
+      var body      = document.body;
+      var DURATION  = 2600; // مدة عرض الأنيميشن (ms)
+      var PLAYED_KEY = 'voc_intro_played';
+
+      function revealShowcase() {
+        if (showcase) showcase.classList.add('showcase-reveal');
+      }
+
+      // إن كانت الأنيميشن قد ظهرت من قبل في هذه الجلسة: تخطَّها فورًا
+      if (sessionStorage.getItem(PLAYED_KEY)) {
+        loader.style.display = 'none';
+        body.classList.remove('intro-active');
+        revealShowcase();
+      } else {
+        function finishIntro() {
+          loader.classList.add('intro-hide');
+          body.classList.remove('intro-active');
+          revealShowcase();
+          sessionStorage.setItem(PLAYED_KEY, '1');
+          setTimeout(function () {
+            loader.style.display = 'none';
+          }, 700);
+        }
+
+        window.addEventListener('load', function () {
+          setTimeout(finishIntro, DURATION);
+        });
+
+        // أمان: لا يعلق المستخدم لو تأخر تحميل الصفحة
+        setTimeout(function () {
+          if (!loader.classList.contains('intro-hide')) finishIntro();
+        }, 5000);
+      }
+    })();
+
     document.getElementById('warn-btn').addEventListener('click', function() {
       document.getElementById('warn-overlay').classList.add('open');
-    });
-    var backBtn = document.querySelector(".back-btn");
-    window.addEventListener("scroll", function() {
-      if (this.pageYOffset > 100) backBtn.classList.add("active");
-      else backBtn.classList.remove("active");
-    });
-    backBtn.addEventListener("click", function() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   </script>
 </body>
