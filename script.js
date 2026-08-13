@@ -2,23 +2,32 @@ const ITEMS_PER_PAGE = 8;
 let currentPage   = 1;
 let currentItems  = [];
 let contentData   = [];
+let currentMode   = 'full'; // 'full' للأخبار | 'pin' للصور | 'video' للفيديوهات
 
 const grid       = document.getElementById('content-grid');
 const tabBtns    = document.querySelectorAll('.tab-btn');
 const newsFilter = document.getElementById('news-filter');
-const charFilter = document.getElementById('char-filter');
 const newsBtns   = document.querySelectorAll('.news-btn');
-const charBtns   = document.querySelectorAll('.char-btn');
+const searchBox   = document.getElementById('search-box');
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
+const cardModal        = document.getElementById('card-modal');
+const cardModalContent = document.getElementById('card-modal-content');
+const cardModalClose   = document.getElementById('card-modal-close');
 
 let currentTab        = 'news';
 let currentNewsFilter = 'all';
-let currentChar       = 'all';
+let currentSearch     = '';
 
-// ---- مساعد الترجمة ----
+// ---- نصوص عربية ثابتة (الموقع بالعربية فقط) ----
+const AR_TEXT = {
+  'read-more': 'قراءة المزيد',
+  'read-less': 'عرض أقل',
+  'download':  'تحميل',
+  'load-more': 'تحميل المزيد'
+};
 function t(key) {
-  const lang = localStorage.getItem('voc_lang') || 'en';
-  return (typeof translations !== 'undefined' && translations[key])
-    ? translations[key][lang] : key;
+  return AR_TEXT[key] || key;
 }
 
 // ---- debounce ----
@@ -63,7 +72,7 @@ async function downloadFile(url, filename) {
   }
 }
 
-// ---- بناء بطاقة واحدة ----
+// ---- بناء بطاقة كاملة (الأخبار + محتوى نافذة التفاصيل) ----
 function buildCard(item, index) {
   const card = document.createElement('div');
   card.className = 'instagram-card';
@@ -106,12 +115,63 @@ function buildCard(item, index) {
   return card;
 }
 
+// ---- بناء صورة مصغّرة بأسلوب Pinterest (للصور فقط) ----
+function buildThumb(item) {
+  const thumb = document.createElement('div');
+  thumb.className = 'pin-thumb';
+  thumb.innerHTML = `<img src="${item.img}" alt="${item.title || ''}" loading="lazy">`;
+  thumb.addEventListener('click', () => openCardModal(item));
+  cardObserver.observe(thumb);
+  return thumb;
+}
+
+// ---- بناء مصغّرة مستطيلة بأسلوب قوائم الفيديو (للفيديوهات فقط) ----
+function buildVideoThumb(item) {
+  const thumb = document.createElement('div');
+  thumb.className = 'video-thumb';
+  thumb.innerHTML = `
+    <div class="video-thumb-img-wrap">
+      <img src="${item.poster || item.video}" alt="${item.title || ''}" loading="lazy">
+      ${item.duration ? `<span class="video-duration">${item.duration}</span>` : ''}
+    </div>
+    <p class="video-thumb-title">${item.title || ''}</p>
+  `;
+  thumb.addEventListener('click', () => openCardModal(item));
+  cardObserver.observe(thumb);
+  return thumb;
+}
+
+// ---- نافذة تفاصيل البطاقة ----
+function openCardModal(item) {
+  cardModalContent.innerHTML = '';
+  cardModalContent.appendChild(buildCard(item, 0));
+  cardModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCardModal() {
+  cardModal.classList.remove('open');
+  cardModalContent.innerHTML = '';
+  document.body.style.overflow = '';
+}
+if (cardModalClose) cardModalClose.addEventListener('click', closeCardModal);
+if (cardModal) {
+  cardModal.addEventListener('click', (e) => {
+    if (e.target === cardModal) closeCardModal();
+  });
+}
+
 // ---- رسم دفعة من العناصر ----
-function renderBatch(items, append) {
+function renderBatch(items, append, mode) {
   if (!append) grid.innerHTML = '';
 
   const fragment = document.createDocumentFragment();
-  items.forEach((item, i) => fragment.appendChild(buildCard(item, i)));
+  items.forEach((item, i) => {
+    let node;
+    if (mode === 'pin')   node = buildThumb(item);
+    else if (mode === 'video') node = buildVideoThumb(item);
+    else node = buildCard(item, i);
+    fragment.appendChild(node);
+  });
   grid.appendChild(fragment);
 }
 
@@ -126,7 +186,7 @@ function addLoadMoreBtn() {
   const btn = document.createElement('button');
   btn.id        = 'load-more-btn';
   btn.className = 'load-more-btn';
-  btn.textContent = t('load-more') || 'Load More';
+  btn.textContent = t('load-more');
   btn.addEventListener('click', debounce(loadMore, 300));
   grid.after(btn);
 }
@@ -135,12 +195,12 @@ function loadMore() {
   currentPage++;
   const start = (currentPage - 1) * ITEMS_PER_PAGE;
   const end   = Math.min(start + ITEMS_PER_PAGE, currentItems.length);
-  renderBatch(currentItems.slice(start, end), true);
+  renderBatch(currentItems.slice(start, end), true, currentMode);
   if (end >= currentItems.length) removeLoadMoreBtn();
 }
 
 // ---- عرض المحتوى الرئيسي ----
-function renderContent(tab, newsFltr, char) {
+function renderContent(tab, newsFltr, search) {
   currentPage = 1;
   removeLoadMoreBtn();
 
@@ -149,17 +209,26 @@ function renderContent(tab, newsFltr, char) {
   if (tab === 'news' && newsFltr !== 'all')
     filtered = filtered.filter(item => item.category === newsFltr);
 
-  if ((tab === 'pictures' || tab === 'videos') && char !== 'all')
-    filtered = filtered.filter(item => item.character === char);
+  if ((tab === 'pictures' || tab === 'videos') && search && search.trim() !== '') {
+    const q = search.trim().toLowerCase();
+    filtered = filtered.filter(item =>
+      (item.title && item.title.toLowerCase().includes(q)) ||
+      (item.author && item.author.toLowerCase().includes(q)) ||
+      (item.character && item.character.toLowerCase().includes(q))
+    );
+  }
 
   currentItems = filtered;
+  currentMode  = tab === 'pictures' ? 'pin' : (tab === 'videos' ? 'video' : 'full');
+  grid.classList.toggle('pin-grid', currentMode === 'pin');
+  grid.classList.toggle('video-grid', currentMode === 'video');
 
   if (!filtered.length) {
     grid.innerHTML = '<p class="no-results">لا يوجد محتوى لهذا التصنيف بعد.</p>';
     return;
   }
 
-  renderBatch(filtered.slice(0, ITEMS_PER_PAGE), false);
+  renderBatch(filtered.slice(0, ITEMS_PER_PAGE), false, currentMode);
 
   if (filtered.length > ITEMS_PER_PAGE) addLoadMoreBtn();
 }
@@ -173,20 +242,20 @@ tabBtns.forEach(btn => {
     currentTab = btn.getAttribute('data-tab');
 
     currentNewsFilter = 'all';
-    currentChar = 'all';
+    currentSearch = '';
+    if (searchInput) searchInput.value = '';
+    if (searchClear) searchClear.style.display = 'none';
     newsBtns.forEach(b => b.classList.remove('active'));
     newsBtns[0].classList.add('active');
-    charBtns.forEach(b => b.classList.remove('active'));
-    charBtns[0].classList.add('active');
 
     if (currentTab === 'news') {
       newsFilter.style.display = 'block';
-      charFilter.style.display = 'none';
+      if (searchBox) searchBox.style.display = 'none';
     } else {
       newsFilter.style.display = 'none';
-      charFilter.style.display = 'block';
+      if (searchBox) searchBox.style.display = 'flex';
     }
-    renderContent(currentTab, currentNewsFilter, currentChar);
+    renderContent(currentTab, currentNewsFilter, currentSearch);
   }, 200));
 });
 
@@ -197,20 +266,26 @@ newsBtns.forEach(btn => {
     newsBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentNewsFilter = btn.getAttribute('data-news');
-    renderContent(currentTab, currentNewsFilter, currentChar);
+    renderContent(currentTab, currentNewsFilter, currentSearch);
   }, 200));
 });
 
-// ---- فلتر الشخصيات ----
-charBtns.forEach(btn => {
-  btn.addEventListener('click', debounce(() => {
-    if (btn.classList.contains('active')) return;
-    charBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentChar = btn.getAttribute('data-char');
-    renderContent(currentTab, currentNewsFilter, currentChar);
-  }, 200));
-});
+// ---- صندوق البحث (الصور والفيديوهات) ----
+if (searchInput) {
+  searchInput.addEventListener('input', debounce(() => {
+    currentSearch = searchInput.value;
+    if (searchClear) searchClear.style.display = currentSearch ? 'flex' : 'none';
+    renderContent(currentTab, currentNewsFilter, currentSearch);
+  }, 250));
+}
+if (searchClear) {
+  searchClear.addEventListener('click', () => {
+    currentSearch = '';
+    searchInput.value = '';
+    searchClear.style.display = 'none';
+    renderContent(currentTab, currentNewsFilter, currentSearch);
+  });
+}
 
 // ---- تفويض الأحداث (read-more + download) ----
 document.addEventListener('click', function (e) {
@@ -226,13 +301,20 @@ document.addEventListener('click', function (e) {
 });
 
 // ---- تحميل البيانات من Firebase ----
+grid.innerHTML = `
+  <div class="loading-msg">
+    <span class="loading-spinner"></span>
+    جاري التحميل...
+  </div>
+`;
+
 if (typeof db !== 'undefined') {
   db.collection('content').orderBy('createdAt', 'desc').get()
     .then(snapshot => {
       if (!snapshot.empty) contentData = snapshot.docs.map(doc => doc.data());
-      renderContent('news', 'all', 'all');
+      renderContent('news', 'all', '');
     })
-    .catch(() => renderContent('news', 'all', 'all'));
+    .catch(() => renderContent('news', 'all', ''));
 } else {
-  renderContent('news', 'all', 'all');
+  renderContent('news', 'all', '');
 }
